@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "virtualbox_TUI"
+version = "0.1.0"
+authors = [
+  { name="Henrique Moura", email="henriquemoura@hotmail.com" },
+]
+description = "A small console interface to control vm's running on VirtualBox"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "urwid",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Environment :: Console",
+]
