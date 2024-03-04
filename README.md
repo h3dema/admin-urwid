@@ -47,10 +47,18 @@ This file contains the following 3 lines. `username` is always `__token__` and y
   password = pypi-....
 ```
 
+After running the command above, you will see a lot of information and the last lines contain the link to the package in the test pypi.
+<pre>
+View at:
+https://test.pypi.org/project/vtui/0.1.0/
+</pre>
 
-To install the uploaded app, use
 
-python3 -m pip install --index-url https://test.pypi.org/ --no-deps virtualbox_TUI
+To install the uploaded app, use the following link that can be found [here](https://test.pypi.org/project/vtui/). Notice that the version may change.
+
+```
+pip3 install -i https://test.pypi.org/simple/ vtui==0.1.0
+```
 
 
 > More information on [Packaging Python Projects](https://packaging.python.org/en/latest/tutorials/packaging-projects/).
