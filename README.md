@@ -14,7 +14,7 @@ pip3 install -r requirements.txt
 
 # run
 cd src
-python3 -m virtualbox_TUI
+python3 -m vtui
 ```
 
 
