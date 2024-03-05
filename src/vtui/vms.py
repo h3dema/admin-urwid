@@ -16,6 +16,12 @@ class virtualbox(object):
         result = subprocess.run([ssh_cmd], shell=True, capture_output=True, text=True)
         return result
 
+    def hostinfo(self) -> str:
+        """ basic information (mem, processors, OS, etc) about the host
+        """
+        result = self.run_ssh("vboxmanage list hostinfo")
+        return result.stdout
+
     def vms(self) -> list[dict]:
         result = self.run_ssh("vboxmanage list vms")
         r = re.findall(r"\"(.*)\" {(.*)}", result.stdout)
@@ -28,11 +34,9 @@ class virtualbox(object):
         r = [{"name": _name, "uid": _id} for _name, _id in r]
         return r
 
-    def hostinfo(self) -> str:
-        """ basic information (mem, processors, OS, etc) about the host
-        """
-        result = self.run_ssh("vboxmanage list hostinfo")
-        return result.stdout
+    # ------------------------------------------------------------------------
+    # VMs
+    # ------------------------------------------------------------------------
 
     def showvminfo(self, vmname: str) -> str:
         """ basic information about the vm configuration
@@ -49,6 +53,10 @@ class virtualbox(object):
         is_headless = "--type headless" if headless else "acpipowerbutton"
         result = self.run_ssh(f"vboxmanage startvm {vmname} {is_headless}")
         return result.stdout
+
+    # ------------------------------------------------------------------------
+    # SNAPSHOTS
+    # ------------------------------------------------------------------------
 
     def list_snapshots(self, vmname: str) -> str:
         result = self.run_ssh(f"vboxmanage snapshot {vmname} list")
