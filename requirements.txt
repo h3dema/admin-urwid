@@ -1,1 +1,4 @@
 urwid
+setuptools
+build
+twine
