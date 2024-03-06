@@ -4,6 +4,12 @@ import logging
 import datetime
 
 
+def run_cmd(ssh_cmd: str) -> subprocess.CompletedProcess:
+    logging.debug(f"cmd: {ssh_cmd}")
+    result = subprocess.run([ssh_cmd], shell=True, capture_output=True, text=True)
+    return result
+
+
 class virtualbox(object):
 
     def __init__(self, hostname):
@@ -12,9 +18,7 @@ class virtualbox(object):
 
     def run_ssh(self, cmd: str) -> subprocess.CompletedProcess:
         ssh_cmd = "{ssh} '{cmd}'".format(ssh=self.ssh, cmd=cmd)
-        logging.debug(f"cmd: {ssh_cmd}")
-        result = subprocess.run([ssh_cmd], shell=True, capture_output=True, text=True)
-        return result
+        return run_cmd(ssh_cmd)
 
     def hostinfo(self) -> str:
         """ basic information (mem, processors, OS, etc) about the host

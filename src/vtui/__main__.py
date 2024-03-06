@@ -7,9 +7,11 @@ if typing.TYPE_CHECKING:
     from collections.abc import Callable, Hashable, Iterable
 
 from .vms import virtualbox
+from .df import df
 
 
-hostvms = virtualbox("foice")
+hostname = "foice"
+hostvms = virtualbox(hostname)
 
 
 class SnapshotAction(Enum):
@@ -108,6 +110,20 @@ def item_vms(button: urwid.Button) -> None:
 def item_hostinfo(button: urwid.Button) -> None:
     result = hostvms.hostinfo()
     text = result
+    response = urwid.Text([text])
+    # done = menu_button("Ok", execute_esc)
+    top.open_box(urwid.ScrollBar(urwid.Scrollable(response)))
+
+
+def item_diskusage(button: urwid.Button) -> None:
+    result = df(hostname)
+    if len(result) == 0:
+        text = "Nothing found"
+    else:
+        fmt = "{:20s} {:10s} {:10s} {:10s} {:10s} {}\n"
+        text = fmt.format(*list(result[0].keys()))
+        for r in result:
+            text += fmt.format(*list(r.values()))
     response = urwid.Text([text])
     # done = menu_button("Ok", execute_esc)
     top.open_box(urwid.ScrollBar(urwid.Scrollable(response)))
@@ -278,37 +294,6 @@ def sub_menu_snapshots(action: SnapshotAction) -> urwid.Widget:
     return menu_button([caption, "..."], open_menu)
 
 
-# ================================================================
-#
-#  MENU DEFINITION
-#
-# ================================================================
-menu_top = menu(
-    "Main Menu",
-    [
-        sub_menu(
-            "VMs",
-            [
-                menu_button("Running vms", item_runningvms),
-                menu_button("Configured vms", item_vms),
-                sub_menu_showvminfo(),
-                menu_button("Start/stop vm", start_stop_vms),
-                sub_menu_snapshots(action=SnapshotAction.LIST),  # list
-                sub_menu_snapshots(action=SnapshotAction.TAKE),  # take a new
-                sub_menu_snapshots(action=SnapshotAction.DELETE),
-            ],
-        ),
-        sub_menu(
-            "Host",
-            [
-                menu_button("Host information", item_hostinfo),
-            ],
-        ),
-        menu_button("Exit program", exit_program),
-    ],
-)
-
-
 class CascadingBoxes(urwid.WidgetPlaceholder):
     max_box_levels = 4
 
@@ -341,6 +326,40 @@ class CascadingBoxes(urwid.WidgetPlaceholder):
             return None
 
         return super().keypress(size, key)
+
+
+# ================================================================
+#
+#  MENU DEFINITION
+#
+# ================================================================
+separator = urwid.AttrMap(urwid.Text([]), None, focus_map="reversed")
+menu_top = menu(
+    "Main Menu",
+    [
+        sub_menu(
+            "VMs",
+            [
+                menu_button("Running vms", item_runningvms),
+                menu_button("Configured vms", item_vms),
+                sub_menu_showvminfo(),
+                menu_button("Start/stop vm", start_stop_vms),
+                separator,
+                sub_menu_snapshots(action=SnapshotAction.LIST),  # list
+                sub_menu_snapshots(action=SnapshotAction.TAKE),  # take a new
+                sub_menu_snapshots(action=SnapshotAction.DELETE),
+            ],
+        ),
+        sub_menu(
+            "Host",
+            [
+                menu_button("Host information", item_hostinfo),
+                menu_button("Disk usage", item_diskusage),
+            ],
+        ),
+        menu_button("Exit program", exit_program),
+    ],
+)
 
 
 """
