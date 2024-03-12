@@ -2,6 +2,7 @@ from __future__ import annotations
 from enum import Enum
 import typing
 import urwid
+import argparse
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Hashable, Iterable
@@ -10,11 +11,8 @@ from .vms import virtualbox
 from .df import df
 
 
-hostname = "foice"
-hostvms = virtualbox(hostname)
-
-
 class SnapshotAction(Enum):
+    """actions over a snapshot"""
     LIST = 1
     TAKE = 2
     DELETE = 3
@@ -83,12 +81,15 @@ def menu(
 
 def item_runningvms(button: urwid.Button) -> None:
     result = hostvms.runningvms()
-    text = "Running VMs\n"
-    text += "|{}|{}|\n".format("-" * 22, "-" * 42)
-    text += "| {:20s} | {:40s} |\n".format("Name", "UUID")
-    text += "|{}|{}|\n".format("-" * 22, "-" * 42)
-    text += "\n".join([f"| {r['name']:20s} | {r['uid']:40s} |" for r in result])
-    text += "\n|{}|{}|\n".format("-" * 22, "-" * 42)
+    if len(result) > 0:
+        text = "Running VMs\n"
+        text += "|{}|{}|\n".format("-" * 22, "-" * 42)
+        text += "| {:20s} | {:40s} |\n".format("Name", "UUID")
+        text += "|{}|{}|\n".format("-" * 22, "-" * 42)
+        text += "\n".join([f"| {r['name']:20s} | {r['uid']:40s} |" for r in result])
+        text += "\n|{}|{}|\n".format("-" * 22, "-" * 42)
+    else:
+        text = f"No running vm's in {hostvms.hostname}"
     response = urwid.Text([text])
     done = menu_button("Ok", execute_esc)
     top.open_box(urwid.Filler(urwid.Pile([response, done])))
@@ -96,12 +97,15 @@ def item_runningvms(button: urwid.Button) -> None:
 
 def item_vms(button: urwid.Button) -> None:
     result = hostvms.vms()
-    text = "Configured VMs\n"
-    text += "|{}|{}|\n".format("-" * 22, "-" * 42)
-    text += "| {:20s} | {:40s} |\n".format("Name", "UUID")
-    text += "|{}|{}|\n".format("-" * 22, "-" * 42)
-    text += "\n".join([f"| {r['name']:20s} | {r['uid']:40s} |" for r in result])
-    text += "\n|{}|{}|\n".format("-" * 22, "-" * 42)
+    if len(result) > 0:
+        text = "Configured VMs\n"
+        text += "|{}|{}|\n".format("-" * 22, "-" * 42)
+        text += "| {:20s} | {:40s} |\n".format("Name", "UUID")
+        text += "|{}|{}|\n".format("-" * 22, "-" * 42)
+        text += "\n".join([f"| {r['name']:20s} | {r['uid']:40s} |" for r in result])
+        text += "\n|{}|{}|\n".format("-" * 22, "-" * 42)
+    else:
+        text = f"No configured vm's in {hostvms.hostname}"
     response = urwid.Text([text])
     done = menu_button("Ok", execute_esc)
     top.open_box(urwid.Filler(urwid.Pile([response, done])))
@@ -333,33 +337,35 @@ class CascadingBoxes(urwid.WidgetPlaceholder):
 #  MENU DEFINITION
 #
 # ================================================================
-separator = urwid.AttrMap(urwid.Text([]), None, focus_map="reversed")
-menu_top = menu(
-    "Main Menu",
-    [
-        sub_menu(
-            "VMs",
-            [
-                menu_button("Running vms", item_runningvms),
-                menu_button("Configured vms", item_vms),
-                sub_menu_showvminfo(),
-                menu_button("Start/stop vm", start_stop_vms),
-                separator,
-                sub_menu_snapshots(action=SnapshotAction.LIST),  # list
-                sub_menu_snapshots(action=SnapshotAction.TAKE),  # take a new
-                sub_menu_snapshots(action=SnapshotAction.DELETE),
-            ],
-        ),
-        sub_menu(
-            "Host",
-            [
-                menu_button("Host information", item_hostinfo),
-                menu_button("Disk usage", item_diskusage),
-            ],
-        ),
-        menu_button("Exit program", exit_program),
-    ],
-)
+def create_menu(hostname: str):
+    separator = urwid.AttrMap(urwid.Text([]), None, focus_map="reversed")
+    menu_top = menu(
+        f"Main Menu - host: {hostname}",
+        [
+            sub_menu(
+                "VMs",
+                [
+                    menu_button("Running vms", item_runningvms),
+                    menu_button("Configured vms", item_vms),
+                    sub_menu_showvminfo(),
+                    menu_button("Start/stop vm", start_stop_vms),
+                    separator,
+                    sub_menu_snapshots(action=SnapshotAction.LIST),  # list
+                    sub_menu_snapshots(action=SnapshotAction.TAKE),  # take a new
+                    sub_menu_snapshots(action=SnapshotAction.DELETE),
+                ],
+            ),
+            sub_menu(
+                "Host",
+                [
+                    menu_button("Host information", item_hostinfo),
+                    menu_button("Disk usage", item_diskusage),
+                ],
+            ),
+            menu_button("Exit program", exit_program),
+        ],
+    )
+    return menu_top
 
 
 """
@@ -369,5 +375,15 @@ cd src
 python3 -m vtui
 """
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Manage VMs.')
+    parser.add_argument("--hostname", type=str, default="foice", choices=["foice", "drone"], help="name of host running virtualbox vm's")
+    args = parser.parse_args()
+
+    # prepare connections
+    hostname = args.hostname
+    hostvms = virtualbox(hostname)
+
+    # open screen menu
+    menu_top = create_menu(hostname)
     top = CascadingBoxes(menu_top)
     urwid.MainLoop(top, palette=[("reversed", "standout", "")]).run()
