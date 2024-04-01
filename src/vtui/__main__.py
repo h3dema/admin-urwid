@@ -46,7 +46,7 @@ def create_disabled_radio_button(name: str) -> urwid.AttrMap:
     return w
 
 
-def create_alert(text: str):
+def create_alert(text: str) -> typing.NoReturn:
     button_canc = menu_button("Cancel", execute_esc)
     top.open_box(urwid.Filler(urwid.Pile([urwid.Text(text), button_canc])))
 
@@ -79,7 +79,7 @@ def menu(
     return urwid.ListBox(urwid.SimpleFocusListWalker(body))
 
 
-def item_runningvms(button: urwid.Button) -> None:
+def item_runningvms(button: urwid.Button) -> typing.NoReturn:
     result = hostvms.runningvms()
     if len(result) > 0:
         text = "Running VMs\n"
@@ -95,7 +95,7 @@ def item_runningvms(button: urwid.Button) -> None:
     top.open_box(urwid.Filler(urwid.Pile([response, done])))
 
 
-def item_vms(button: urwid.Button) -> None:
+def item_vms(button: urwid.Button) -> typing.NoReturn:
     result = hostvms.vms()
     if len(result) > 0:
         text = "Configured VMs\n"
@@ -111,7 +111,7 @@ def item_vms(button: urwid.Button) -> None:
     top.open_box(urwid.Filler(urwid.Pile([response, done])))
 
 
-def item_hostinfo(button: urwid.Button) -> None:
+def item_hostinfo(button: urwid.Button) -> typing.NoReturn:
     result = hostvms.hostinfo()
     text = result
     response = urwid.Text([text])
@@ -119,7 +119,7 @@ def item_hostinfo(button: urwid.Button) -> None:
     top.open_box(urwid.ScrollBar(urwid.Scrollable(response)))
 
 
-def item_diskusage(button: urwid.Button) -> None:
+def item_diskusage(button: urwid.Button) -> typing.NoReturn:
     result = df(hostname)
     if len(result) == 0:
         text = "Nothing found"
@@ -133,7 +133,7 @@ def item_diskusage(button: urwid.Button) -> None:
     top.open_box(urwid.ScrollBar(urwid.Scrollable(response)))
 
 
-def start_stop_vms(button: urwid.Button) -> None:
+def start_stop_vms(button: urwid.Button) -> typing.NoReturn:
     """
 
         TODO: change vm selection to CHECKBOX, then this method dispatches all action at the same time
@@ -198,7 +198,7 @@ def start_stop_vms(button: urwid.Button) -> None:
     top.open_box(urwid.Filler(urwid.Pile([options, sep, headless, sep, force_down, sep, button_exec, button_canc])))
 
 
-def item_showvminfo(button: urwid.Button) -> None:
+def item_showvminfo(button: urwid.Button) -> typing.NoReturn:
     result = hostvms.showvminfo(vmname=button.label)
     text = result
     response = urwid.Text([text])
@@ -224,7 +224,7 @@ def sub_menu_snapshots(action: SnapshotAction) -> urwid.Widget:
         result = hostvms.take_snapshot(vmname=button.label)
         create_alert(result)
 
-    def item_snapshot_list(button: urwid.Button) -> None:
+    def item_snapshot_list(button: urwid.Button) -> typing.NoReturn:
         """
             create a group with one checkbox for each snapshot
             after selection, click on "delete" button remove all selected snapshots
@@ -241,7 +241,7 @@ def sub_menu_snapshots(action: SnapshotAction) -> urwid.Widget:
         contents = menu(caption, choices)
         top.open_box(contents)
 
-    def item_snapshot_delete(button: urwid.Button) -> None:
+    def item_snapshot_delete(button: urwid.Button) -> typing.NoReturn:
         """
             create a group with one checkbox for each snapshot
             after selection, click on "delete" button remove all selected snapshots
@@ -301,12 +301,12 @@ def sub_menu_snapshots(action: SnapshotAction) -> urwid.Widget:
 class CascadingBoxes(urwid.WidgetPlaceholder):
     max_box_levels = 4
 
-    def __init__(self, box: urwid.Widget) -> None:
+    def __init__(self, box: urwid.Widget) -> typing.NoReturn:
         super().__init__(urwid.SolidFill("/"))
         self.box_level = 0
         self.open_box(box)
 
-    def open_box(self, box: urwid.Widget) -> None:
+    def open_box(self, box: urwid.Widget) -> typing.NoReturn:
         self.original_widget = urwid.Overlay(
             urwid.LineBox(box),
             self.original_widget,
@@ -338,6 +338,11 @@ class CascadingBoxes(urwid.WidgetPlaceholder):
 #
 # ================================================================
 def create_menu(hostname: str):
+    """ create a custom menu based on the hostname
+
+        Args:
+            hostname (str): hostname or ip address used by the SSH calls
+    """
     separator = urwid.AttrMap(urwid.Text([]), None, focus_map="reversed")
     menu_top = menu(
         f"Main Menu - host: {hostname}",
@@ -368,13 +373,8 @@ def create_menu(hostname: str):
     return menu_top
 
 
-"""
-Example:
-
-cd src
-python3 -m vtui
-"""
-if __name__ == "__main__":
+def main() -> None:
+    """ main entry of the program. It gets arguments from the command line and creates the menu to access the host and VM's """
     parser = argparse.ArgumentParser(description='Manage VMs.')
     parser.add_argument("--hostname", type=str, default="foice", choices=["foice", "drone"], help="name of host running virtualbox vm's")
     args = parser.parse_args()
@@ -387,3 +387,14 @@ if __name__ == "__main__":
     menu_top = create_menu(hostname)
     top = CascadingBoxes(menu_top)
     urwid.MainLoop(top, palette=[("reversed", "standout", "")]).run()
+
+
+"""
+Example:
+
+cd src
+python3 -m vtui
+"""
+if __name__ == "__main__":
+    main()
+
