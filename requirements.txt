@@ -2,3 +2,5 @@ urwid
 setuptools
 build
 twine
+
+mypy
