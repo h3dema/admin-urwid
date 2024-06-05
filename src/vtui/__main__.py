@@ -60,7 +60,7 @@ class Main():
         self.hostvms = virtualbox(self.hostname)
 
         # open screen menu
-        self.menu_top = self.create_menu(hostname)
+        self.menu_top = self.create_menu(self.hostname)
         self.top = CascadingBoxes(self.menu_top)
 
 
@@ -111,10 +111,10 @@ class Main():
         caption: str | tuple[Hashable, str] | list[str | tuple[Hashable, str]],
         choices: Iterable[urwid.Widget],
     ) -> urwid.Widget:
-        contents = menu(caption, choices)
+        contents = self.menu(caption, choices)
 
         def open_menu(button: urwid.Button) -> None:
-            return top.open_box(contents)
+            return self.top.open_box(contents)
 
         return self.menu_button([caption, "..."], open_menu)
 
@@ -137,7 +137,7 @@ class Main():
             text += "\n".join([f"| {r['name']:20s} | {r['uid']:40s} |" for r in result])
             text += "\n|{}|{}|\n".format("-" * 22, "-" * 42)
         else:
-            text = f"No running vm's in {hostvms.hostname}"
+            text = f"No running vm's in {self.hostvms.hostname}"
         response = urwid.Text([text])
         done = self.menu_button("Ok", self.execute_esc)
         self.top.open_box(urwid.Filler(urwid.Pile([response, done])))
@@ -153,7 +153,7 @@ class Main():
             text += "\n".join([f"| {r['name']:20s} | {r['uid']:40s} |" for r in result])
             text += "\n|{}|{}|\n".format("-" * 22, "-" * 42)
         else:
-            text = f"No configured vm's in {hostvms.hostname}"
+            text = f"No configured vm's in {self.hostvms.hostname}"
         response = urwid.Text([text])
         done = self.menu_button("Ok", self.execute_esc)
         self.top.open_box(urwid.Filler(urwid.Pile([response, done])))
@@ -254,7 +254,7 @@ class Main():
     def sub_menu_showvminfo(self) -> urwid.Widget:
         caption = "VM information"
         choices = [
-            self.menu_button(vm["name"], item_showvminfo) for vm in hostvms.vms()
+            self.menu_button(vm["name"], self.item_showvminfo) for vm in self.hostvms.vms()
         ]
         contents = self.menu(caption, choices)
 
@@ -308,7 +308,7 @@ class Main():
                 for k in cbs:
                     if cbs[k]["checkbox"].get_state():
                         # selected
-                        result = hostvms.delete_snapshot(vmname=cbs[k]["vmname"], snapname=cbs[k]["snapname"])
+                        result = self.hostvms.delete_snapshot(vmname=cbs[k]["vmname"], snapname=cbs[k]["snapname"])
                         results.append(result)
                 self.create_alert("\n".join(results))
 
@@ -349,7 +349,7 @@ class Main():
     #  MENU DEFINITION
     #
     # ================================================================
-    def self.create_menu(self, hostname: str):
+    def create_menu(self, hostname: str):
         """ create a custom menu based on the hostname
 
             Args:
@@ -362,10 +362,10 @@ class Main():
                 self.sub_menu(
                     "VMs",
                     [
-                        self.menu_button("Running vms", item_runningvms),
-                        self.menu_button("Configured vms", item_vms),
+                        self.menu_button("Running vms", self.item_runningvms),
+                        self.menu_button("Configured vms", self.item_vms),
                         self.sub_menu_showvminfo(),
-                        self.menu_button("Start/stop vm", start_stop_vms),
+                        self.menu_button("Start/stop vm", self.start_stop_vms),
                         separator,
                         self.sub_menu_snapshots(action=SnapshotAction.LIST),  # list
                         self.sub_menu_snapshots(action=SnapshotAction.TAKE),  # take a new
@@ -375,8 +375,8 @@ class Main():
                 self.sub_menu(
                     "Host",
                     [
-                        self.menu_button("Host information", item_hostinfo),
-                        self.menu_button("Disk usage", item_diskusage),
+                        self.menu_button("Host information", self.item_hostinfo),
+                        self.menu_button("Disk usage", self.item_diskusage),
                     ],
                 ),
                 self.menu_button("Exit program", self.exit_program),
